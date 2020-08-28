@@ -11,8 +11,9 @@ import {
 } from "miragejs"
 
 
-export default function () {
-  createServer({
+export default function (environment = "development") {
+  return createServer({
+    environment,
     serializers: {
       reminder: RestSerializer.extend({
         include: ["list"],
@@ -66,26 +67,47 @@ export default function () {
       this.get("/api/reminders", (schema) => {
         return schema.reminders.all()
       })
+
       this.post("/api/reminders", (schema, request) => {
         let attrs = JSON.parse(request.requestBody)
         console.log(attrs)
 
         return schema.reminders.create(attrs)
       })
+      
       this.delete("/api/reminders/:id", (schema, request) => {
         let id = request.params.id
       
         return schema.reminders.find(id).destroy()
       })
+      
       this.get("/api/lists", (schema, request) => {
         return schema.lists.all() 
       })
+      
       this.get("/api/lists/:id/reminders", (schema, request) => {
         let listId = request.params.id
         let list = schema.lists.find(listId)
       
         return list.reminders
       })
+      
+      this.post("/api/lists", (schema, request) => {
+        let attrs = JSON.parse(request.requestBody)
+      
+        return schema.lists.create(attrs)
+      })
+
+      this.delete("/api/lists/:id", (schema, request) => {
+        let id = request.params.id; // get list id
+        let list = schema.lists.find(id); // find the list by id
+
+        // destroy list reminders
+        list.reminders.destroy();
+        
+        // destroy list
+        return list.destroy();
+      });
     },
   })
 }
